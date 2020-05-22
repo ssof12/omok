@@ -1,4 +1,4 @@
- from state import State
+from state import State
 from mcts import pv_mcts_action
 from tensorflow.keras.models import load_model
 from tensorflow.keras import backend as K

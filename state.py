@@ -227,6 +227,61 @@ class State:
             return True, 0
 
 
+    def get_9set(self, i, j, c):
+        if self.check_turn():
+            me = self.black
+        else:
+            me = self.white
+
+        if c == 0:
+            a, b = 0, 1
+        elif c == 1:
+            a, b = 1, 0
+        elif c == 2:
+            a, b = 1, 1
+        else:
+            a, b = -1, 1
+
+        left, mid, right = 0, 1, 0
+        l1, l2, r1, r2 = 0, 0, 0, 0
+
+        try:
+            for k in range(1, 5):
+                if i + a * k < 0 or j + b * k < 0:
+                    break
+                if me[i + a * k][j + b * k] == 1:
+                    if r1 == 0:
+                        mid += 1
+                    else:
+                        right += 1
+                elif r1 == 0:
+                    r1 = k
+                else:
+                    r2 = k
+                    break
+        except IndexError:
+            pass
+
+        try:
+            for k in range(1, 5):
+                if i - a * k < 0 or j - b * k < 0:
+                    break
+                if me[i - a * k][j - b * k] == 1:
+                    if l1 == 0:
+                        mid += 1
+                    else:
+                        left += 1
+                elif l1 == 0:
+                    l1 = k
+                else:
+                    l2 = k
+                    break
+        except IndexError:
+            pass
+
+        return a, b, left, mid, right, l1, l2, r1, r2
+
+
     def check_5(self, i, j):
         if self.check_turn():
             me = self.black
@@ -339,11 +394,11 @@ class State:
         except IndexError:
             pass
 
+        me[i][j] = 0
+
         if length == 5:
-            me[i][j] = 0
             return True
 
-        me[i][j] = 0
         return False
 
 
@@ -467,52 +522,179 @@ class State:
         return False
 
 
-    def check_44(self, i, j):
-        self.black[i][j] = 1
+    def count_4(self, i, j):
+        if self.check_turn():
+            me = self.black
+        else:
+            me = self.white
+
+        me[i][j] = 1
         count = 0
 
         for c in range(4):
-            if c == 0: a, b = 0, 1
-            elif c == 1: a, b = 1, 0
-            elif c == 2: a, b = 1, 1
-            else: a, b = -1, 1
+            a, b, left, mid, right, l1, l2, r1, r2 = self.get_9set(i, j, c)
 
-            left, mid, right = 0, 1, 0
-            l1, l2, r1, r2 = 0, 0, 0, 0
-
-            try:
-                for k in range(1, 5):
-                    if i+a*k < 0 or j+b*k < 0:
-                        break
-                    if self.black[i + a * k][j + b * k] == 1:
-                        if r1 == 0:
-                            mid += 1
-                        else:
-                            right += 1
+            if mid == 4:
+                half = 0
+                if left >= 1:
+                    half += 1
+                    if right >= 1:
+                        half += 1
                     elif r1 == 0:
-                        r1 = k
-                    else:
-                        r2 = k
-                        break
-            except IndexError:
-                pass
+                        half += 1
+                    elif self.white[i + a * r1][j + b * r1] == 1:
+                        half += 1
+                elif right >= 1:
+                    half += 1
+                    if l1 == 0:
+                        half += 1
+                    elif self.white[i - a * l1][j - b * l1] == 1:
+                        half += 1
+                if l1 == 0:
+                    half += 1
+                elif self.white[i - a * l1][j - b * l1] == 1:
+                    half += 1
 
-            try:
-                for k in range(1, 5):
-                    if i-a*k < 0 or j-b*k < 0:
-                        break
-                    if self.black[i - a * k][j - b * k] == 1:
-                        if l1 == 0:
-                            mid += 1
-                        else:
-                            left += 1
-                    elif l1 == 0:
-                        l1 = k
+                if r1 == 0:
+                    half += 1
+                elif self.white[i + a * r1][j + b * r1] == 1:
+                    half += 1
+
+                if half < 2:
+                    count += 1
+
+            else:
+                if mid + left == 4:
+                    if self.white[i - a * l1][j - b * l1] == 0:
+                        count += 1
+                if mid + right == 4:
+                    if self.white[i + a * r1][j + b * r1] == 0:
+                        count += 1
+
+        me[i][j] = 0
+
+        if count > 0:
+            return count
+
+
+    def count_3(self,i, j):
+        if self.check_turn():
+            me = self.black
+            enemy = self.white
+        else:
+            me = self.white
+            enemy = self.black
+
+        me[i][j] = 1
+        count = 0
+
+        for c in range(4):
+            a, b, left, mid, right, l1, l2, r1, r2 = self.get_9set(i, j, c)
+
+            if left >= 1 and right >= 1:
+                continue
+            elif l1 == 0 or r1 == 0:
+                continue
+            elif left >= 1 and left + mid == 3:
+                if enemy[i - a * l1][j - b * l1] == 1 or l2 == 0:
+                    continue
+                elif enemy[i - a * l2][j - b * l2] == 1 or enemy[i + a * r1][j + b * r1] == 1:
+                    continue
+                else:
+                    try:
+                        if i - a * l2 - a < 0 or j - b * l2 - b < 0:
+                            pass
+                        elif me[i - a * l2 - a][j - b * l2 - b] == 1:
+                            continue
+                    except IndexError:
+                        pass
+
+                    if self.check_legal(i - a * l1, j - b * l1)[0]:
+                        count += 1
                     else:
-                        l2 = k
-                        break
-            except IndexError:
-                pass
+                        continue
+
+            elif right >= 1 and right + mid == 3:
+                if enemy[i + a * r1][j + b * r1] == 1 or r2 == 0:
+                    continue
+                elif enemy[i + a * r2][j + b * r2] == 1 or enemy[i - a * l1][j - b * l1] == 1:
+                    continue
+                else:
+                    try:
+                        if i + a * r2 + a < 0 or j + b * r2 + b < 0:
+                            pass
+                        elif me[i + a * r2 + a][j + b * r2 + b] == 1:
+                            continue
+                    except IndexError:
+                        pass
+
+                    if self.check_legal(i + a * r1, j + b * r1)[0]:
+                        count += 1
+                    else:
+                        continue
+
+            elif mid == 3 and left == right == 0:
+                if enemy[i - a * l1][j - b * l1] == 1 or enemy[i + a * r1][j + b * r1] == 1:
+                    continue
+
+                left_half, right_half = False, False
+
+                if l2 == 0 or enemy[i - a * l2][j - b * l2] == 1:
+                    left_half = True
+                else:
+                    try:
+                        if i - a * l2 - a < 0 or j - b * l2 - b < 0:
+                            pass
+                        elif me[i - a * l2 - a][j - b * l2 - b] == 1:
+                            left_half = True
+                    except IndexError:
+                        pass
+
+                if r2 == 0 or enemy[i + a * r2][j + b * r2] == 1:
+                    right_half = True
+                else:
+                    try:
+                        if i + a * r2 + a < 0 or j + b * r2 + b < 0:
+                            pass
+                        elif me[i + a * r2 + a][j + b * r2 + b] == 1:
+                            right_half = True
+                    except IndexError:
+                        pass
+
+                if left_half == right_half == True:
+                    continue
+                elif left_half == right_half == False:
+                    if self.check_legal(i - a * l1, j - b * l1)[0] or self.check_legal(i + a * r1, j + b * r1)[0]:
+                        count += 1
+                    else:
+                        continue
+                elif left_half:
+                    if self.check_legal(i + a * r1, j + b * r1)[0]:
+                        count += 1
+                    else:
+                        continue
+                elif right_half:
+                    if self.check_legal(i - a * l1, j - b * l1)[0]:
+                        count += 1
+                    else:
+                        continue
+
+        me[i][j] = 0
+
+        return count
+
+
+    def check_44(self, i, j):
+        if self.check_turn():
+            me = self.black
+        else:
+            me = self.white
+
+        me[i][j] = 1
+        count = 0
+
+        for c in range(4):
+            a, b, left, mid, right, l1, l2, r1, r2 = self.get_9set(i, j, c)
 
             if mid == 4:
                 half = 0
@@ -562,51 +744,7 @@ class State:
         count = 0
 
         for c in range(4):
-            if c == 0:
-                a, b = 0, 1
-            elif c == 1:
-                a, b = 1, 0
-            elif c == 2:
-                a, b = 1, 1
-            else:
-                a, b = -1, 1
-
-            left, mid, right = 0, 1, 0
-            l1, l2, r1, r2 = 0, 0, 0, 0
-
-            try:
-                for k in range(1, 5):
-                    if i+a*k < 0 or j+b*k < 0:
-                        break
-                    if self.black[i + a * k][j + b * k] == 1:
-                        if r1 == 0:
-                            mid += 1
-                        else:
-                            right += 1
-                    elif r1 == 0:
-                        r1 = k
-                    else:
-                        r2 = k
-                        break
-            except IndexError:
-                pass
-
-            try:
-                for k in range(1, 5):
-                    if i-a*k < 0 or j-b*k < 0:
-                        break
-                    if self.black[i - a * k][j - b * k] == 1:
-                        if l1 == 0:
-                            mid += 1
-                        else:
-                            left += 1
-                    elif l1 == 0:
-                        l1 = k
-                    else:
-                        l2 = k
-                        break
-            except IndexError:
-                pass
+            a, b, left, mid, right, l1, l2, r1, r2 = self.get_9set(i, j, c)
 
             if left >= 1 and right >= 1:
                 continue
@@ -702,6 +840,38 @@ class State:
         return False
 
 
+    def check_finish(self, i, j):
+        # 4, 3 갯수 세기
+        count_4 = self.count_4(i, j)
+        count_3 = self.count_3(i, j)
+
+        # 흑의 경우 43
+        if self.check_turn():
+            if count_4 == 1 and count_3 == 1:
+                return True
+            else:
+                return False
+        # 백의 경우 43, 44
+        else:
+            if count_4 + count_3 >= 2 and count_4 >= 1:
+                return True
+            else:
+                return False
+
+
+    def check_finish2(self, i, j):
+        # 3 갯수 세기
+        count_3 = self.count_3(i, j)
+
+        # 백의 33 체크
+        if not self.check_turn():
+            if count_3 >= 2:
+                return True
+            else:
+                return False
+        return False
+
+
     def check_defend(self, i, j):
         depend_4 = []
 
@@ -790,6 +960,197 @@ class State:
                         depend_4.append((i + a * r1)*15 + j + b * r1)
 
         return depend_4
+
+
+    def check_defend2(self, i, j):
+        depend_3 = []
+
+        if self.check_turn():
+            enemy = self.white
+            me = self.black
+        else:
+            enemy = self.black
+            me = self.white
+
+        for c in range(4):
+            if c == 0:
+                a, b = 0, 1
+            elif c == 1:
+                a, b = 1, 0
+            elif c == 2:
+                a, b = 1, 1
+            else:
+                a, b = -1, 1
+
+            left, mid, right = 0, 1, 0
+            l1, l2, r1, r2 = 0, 0, 0, 0
+
+            try:
+                for k in range(1, 5):
+                    if i + a * k < 0 or j + b * k < 0:
+                        break
+                    if enemy[i + a * k][j + b * k] == 1:
+                        if r1 == 0:
+                            mid += 1
+                        else:
+                            right += 1
+                    elif r1 == 0:
+                        r1 = k
+                    else:
+                        r2 = k
+                        break
+            except IndexError:
+                pass
+
+            try:
+                for k in range(1, 5):
+                    if i - a * k < 0 or j - b * k < 0:
+                        break
+                    if enemy[i - a * k][j - b * k] == 1:
+                        if l1 == 0:
+                            mid += 1
+                        else:
+                            left += 1
+                    elif l1 == 0:
+                        l1 = k
+                    else:
+                        l2 = k
+                        break
+            except IndexError:
+                pass
+
+
+            if left >= 1 and right >= 1:
+                continue
+            elif l1 == 0 or r1 == 0:
+                continue
+            elif left >= 1 and left + mid == 3:
+                if me[i - a * l1][j - b * l1] == 1 or l2 == 0:
+                    continue
+                elif me[i - a * l2][j - b * l2] == 1 or me[i + a * r1][j + b * r1] == 1:
+                    continue
+                else:
+                    try:
+                        if i - a * l2 - a < 0 or j - b * l2 - b < 0:
+                            pass
+                        elif enemy[i - a * l2 - a][j - b * l2 - b] == 1 and self.check_turn() == False:
+                            continue
+                    except IndexError:
+                        pass
+
+                    if self.check_legal(i - a * l1, j - b * l1)[0]:
+                        depend_3.append(15*(i-a*l1) + j-b*l1)
+                    if self.check_legal(i - a * l2, j - b * l2)[0]:
+                        depend_3.append(15 * (i - a * l2) + j - b * l2)
+                    if self.check_legal(i + a * r1, j + b * r1)[0]:
+                        depend_3.append(15 * (i + a * r1) + j + b * r1)
+
+            elif right >= 1 and right + mid == 3:
+                if me[i + a * r1][j + b * r1] == 1 or r2 == 0:
+                    continue
+                elif me[i + a * r2][j + b * r2] == 1 or me[i - a * l1][j - b * l1] == 1:
+                    continue
+                else:
+                    try:
+                        if i + a * r2 + a < 0 or j + b * r2 + b < 0:
+                            pass
+                        elif enemy[i + a * r2 + a][j + b * r2 + b] == 1 and self.check_turn() == False:
+                            continue
+                    except IndexError:
+                        pass
+
+                    if self.check_legal(i + a * r1, j + b * r1)[0]:
+                        depend_3.append(15 * (i + a * r1) + j + b * r1)
+                    if self.check_legal(i + a * r2, j + b * r2)[0]:
+                        depend_3.append(15 * (i + a * r2) + j + b * r2)
+                    if self.check_legal(i - a * l1, j - b * l1)[0]:
+                        depend_3.append(15 * (i - a * l1) + j - b * l1)
+
+
+            elif mid == 3 and left == right == 0:
+                if me[i - a * l1][j - b * l1] == 1 or me[i + a * r1][j + b * r1] == 1:
+                    continue
+
+                left_half, right_half = False, False
+
+                if l2 == 0 or me[i - a * l2][j - b * l2] == 1:
+                    left_half = True
+                else:
+                    try:
+                        if i - a * l2 - a < 0 or j - b * l2 - b < 0:
+                            pass
+                        elif enemy[i - a * l2 - a][j - b * l2 - b] == 1 and self.check_turn() == False:
+                            left_half = True
+                    except IndexError:
+                        pass
+
+                if r2 == 0 or me[i + a * r2][j + b * r2] == 1:
+                    right_half = True
+                else:
+                    try:
+                        if i + a * r2 + a < 0 or j + b * r2 + b < 0:
+                            pass
+                        elif enemy[i + a * r2 + a][j + b * r2 + b] == 1 and self.check_turn() == False:
+                            right_half = True
+                    except IndexError:
+                        pass
+
+                if left_half == right_half == True:
+                    continue
+                elif left_half == right_half == False:
+                    if self.check_legal(i - a * l1, j - b * l1)[0]:
+                        depend_3.append(15 * (i - a * l1) + j - b * l1)
+                    if self.check_legal(i + a * r1, j + b * r1)[0]:
+                        depend_3.append(15 * (i + a * r1) + j + b * r1)
+                elif left_half:
+                    if self.check_legal(i + a * r1, j + b * r1)[0]:
+                        depend_3.append(15 * (i + a * r1) + j + b * r1)
+                elif right_half:
+                    if self.check_legal(i - a * l1, j - b * l1)[0]:
+                        depend_3.append(15 * (i - a * l1) + j - b * l1)
+
+        return depend_3
+
+
+
+    def defend_list(self):
+        defend_action = []
+
+        if self.turn:
+            me = self.black
+            enemy = self.white
+        else:
+            me = self.white
+            enemy = self.black
+
+        for i in range(15):
+            for j in range(15):
+                if enemy[i][j] == 1:
+                    for k in self.check_defend(i, j):
+                        if k not in defend_action and self.check_legal(k // 15, k % 15)[0]:
+                            defend_action.append(k)
+
+        return defend_action
+
+
+    def defend_list2(self):
+        defend_action = []
+
+        if self.turn:
+            me = self.black
+            enemy = self.white
+        else:
+            me = self.white
+            enemy = self.black
+
+        for i in range(15):
+            for j in range(15):
+                if enemy[i][j] == 1:
+                    for k in self.check_defend2(i, j):
+                        if k not in defend_action and self.check_legal(k // 15, k % 15)[0]:
+                            defend_action.append(k)
+
+        return defend_action
 
 
     def check_attack(self, i, j):
@@ -972,7 +1333,7 @@ class State:
 
     def bot_action(self):
         win_action = []
-        depend_action = []
+        defend_action = []
         attack_action = []
         normal_action = []
 
@@ -995,15 +1356,15 @@ class State:
 
                 if not win_action and enemy[i][j] == 1:
                     for k in self.check_defend(i,j):
-                        if k not in depend_action and self.check_legal(k//15,k%15)[0]:
-                            depend_action.append(k)
+                        if k not in defend_action and self.check_legal(k//15,k%15)[0]:
+                            defend_action.append(k)
 
-                if not win_action and not depend_action and me[i][j] == 1:
+                if not win_action and not defend_action and me[i][j] == 1:
                     for k in self.check_attack(i,j):
                         if k not in attack_action and self.check_legal(k//15,k%15)[0]:
                             attack_action.append(k)
 
-                if not win_action and not depend_action and not attack_action:
+                if not win_action and not defend_action and not attack_action:
                     if self.check_normal(i,j) and self.black[i][j] == 0 and self.white[i][j] == 0 and self.check_legal(i,j)[0]:
                         normal_action.append(15*i+j)
 
@@ -1014,8 +1375,8 @@ class State:
 
         if win_action:
             return  win_action[randint(0,len(win_action)-1)]
-        if depend_action:
-            return  depend_action[randint(0,len(depend_action)-1)]
+        if defend_action:
+            return  defend_action[randint(0,len(defend_action)-1)]
         if attack_action:
             return  attack_action[randint(0,len(attack_action)-1)]
 

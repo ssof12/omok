@@ -1,3 +1,4 @@
 *.h5
 *.history
-
+__pycache__
+.idea

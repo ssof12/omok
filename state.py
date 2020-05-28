@@ -525,8 +525,10 @@ class State:
     def count_4(self, i, j):
         if self.check_turn():
             me = self.black
+            enemy = self.white
         else:
             me = self.white
+            enemy = self.black
 
         me[i][j] = 1
         count = 0
@@ -535,46 +537,38 @@ class State:
             a, b, left, mid, right, l1, l2, r1, r2 = self.get_9set(i, j, c)
 
             if mid == 4:
-                half = 0
-                if left >= 1:
-                    half += 1
-                    if right >= 1:
-                        half += 1
-                    elif r1 == 0:
-                        half += 1
-                    elif self.white[i + a * r1][j + b * r1] == 1:
-                        half += 1
-                elif right >= 1:
-                    half += 1
-                    if l1 == 0:
-                        half += 1
-                    elif self.white[i - a * l1][j - b * l1] == 1:
-                        half += 1
-                if l1 == 0:
-                    half += 1
-                elif self.white[i - a * l1][j - b * l1] == 1:
-                    half += 1
+                l_half, r_half = False, False
+                if me == self.black:
+                    if  left >= 1:
+                        l_half = True
+                    if  right >= 1:
+                        r_half = True
 
-                if r1 == 0:
-                    half += 1
-                elif self.white[i + a * r1][j + b * r1] == 1:
-                    half += 1
+                if l1 == 0 or enemy[i - a * l1][j - b * l1] == 1:
+                    l_half = True
+                if r1 == 0 or enemy[i + a * r1][j + b * r1] == 1:
+                    r_half = True
 
-                if half < 2:
+                if not (l_half and r_half):
                     count += 1
 
             else:
                 if mid + left == 4:
-                    if self.white[i - a * l1][j - b * l1] == 0:
+                    if enemy[i - a * l1][j - b * l1] == 0:
                         count += 1
                 if mid + right == 4:
-                    if self.white[i + a * r1][j + b * r1] == 0:
+                    if enemy[i + a * r1][j + b * r1] == 0:
                         count += 1
+                if me == self.white:
+                    if mid + left > 4:
+                        if enemy[i - a * l1][j - b * l1] == 0:
+                            count += 1
+                    if mid + right > 4:
+                        if enemy[i + a * r1][j + b * r1] == 0:
+                            count += 1
 
         me[i][j] = 0
-
-        if count > 0:
-            return count
+        return count
 
 
     def count_3(self,i, j):

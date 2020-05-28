@@ -111,28 +111,35 @@ class Ai:
 
         for i in range(15):
             for j in range(15):
-
                 # 5 찾기
                 if state.black[i][j] == 0 and state.white[i][j] == 0 and state.check_5(i, j):
                     win_action.append(15 * i + j)
 
+        for i in range(15):
+            for j in range(15):
                 # 백의 경우 6이상도 찾기
                 if not state.check_turn():
                     if state.black[i][j] == 0 and state.white[i][j] == 0 and state.check_6(i, j):
                         win_action.append(15 * i + j)
 
+        for i in range(15):
+            for j in range(15):
                 # 상대 4 찾기
                 if not win_action and enemy[i][j] == 1:
                     for k in state.check_defend(i, j):
                         if k not in depend_action and state.check_legal(k // 15, k % 15)[0]:
                             depend_action.append(k)
 
+        for i in range(15):
+            for j in range(15):
                 # 열린 3 찾기
                 if not win_action and not depend_action and me[i][j] == 1:
                     for k in state.check_attack(i, j):
                         if k not in attack_action and state.check_legal(k // 15, k % 15)[0]:
                             attack_action.append(k)
 
+        for i in range(15):
+            for j in range(15):
                 # finish 찾기
                 if me[i][j] == 0 and enemy[i][j] == 0 and state.check_finish(i, j):
                     if state.check_legal(i, j)[0]:

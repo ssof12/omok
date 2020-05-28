@@ -66,10 +66,11 @@ class Gui:
                     x,y = event.pos
                     row = round((y - 43) / 51)
                     col = round((x - 43) / 51)
-                    #self.game.next(row * game.width + col)
+                    self.game.next(row * game.width + col)
 
-                    #self.game.game_length += 1
-                    #self.update_game_view()
+                    self.game.game_length += 1
+                    self.update_game_view()
+            '''
             if self.game.state.check_turn():
                 #action = model_action(model, self.game.state)
                 #self.game.next(action)
@@ -88,6 +89,7 @@ class Gui:
                 self.update_game_view()
                 self.game.game_length += 1
         print("random, model, draw", win1, win2, draw)
+        '''
         pg.quit()
 
     def random_play(self):

@@ -101,7 +101,6 @@ class Ai:
         win_action = []
         depend_action = []
         attack_action = []
-        vcf_action = []
 
         if state.check_turn():
             me = state.black

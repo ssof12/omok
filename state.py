@@ -598,7 +598,7 @@ class State:
                     try:
                         if i - a * l2 - a < 0 or j - b * l2 - b < 0:
                             pass
-                        elif me[i - a * l2 - a][j - b * l2 - b] == 1:
+                        elif me == self.black and me[i - a * l2 - a][j - b * l2 - b] == 1:
                             continue
                     except IndexError:
                         pass
@@ -617,7 +617,7 @@ class State:
                     try:
                         if i + a * r2 + a < 0 or j + b * r2 + b < 0:
                             pass
-                        elif me[i + a * r2 + a][j + b * r2 + b] == 1:
+                        elif me == self.black and me[i + a * r2 + a][j + b * r2 + b] == 1:
                             continue
                     except IndexError:
                         pass
@@ -639,7 +639,7 @@ class State:
                     try:
                         if i - a * l2 - a < 0 or j - b * l2 - b < 0:
                             pass
-                        elif me[i - a * l2 - a][j - b * l2 - b] == 1:
+                        elif me == self.black and me[i - a * l2 - a][j - b * l2 - b] == 1:
                             left_half = True
                     except IndexError:
                         pass
@@ -650,7 +650,7 @@ class State:
                     try:
                         if i + a * r2 + a < 0 or j + b * r2 + b < 0:
                             pass
-                        elif me[i + a * r2 + a][j + b * r2 + b] == 1:
+                        elif me == self.black and me[i + a * r2 + a][j + b * r2 + b] == 1:
                             right_half = True
                     except IndexError:
                         pass
@@ -1106,11 +1106,10 @@ class State:
         return depend_3
 
 
-
     def defend_list(self):
         defend_action = []
 
-        if self.turn:
+        if self.check_turn():
             me = self.black
             enemy = self.white
         else:
@@ -1130,7 +1129,7 @@ class State:
     def defend_list2(self):
         defend_action = []
 
-        if self.turn:
+        if self.check_turn():
             me = self.black
             enemy = self.white
         else:

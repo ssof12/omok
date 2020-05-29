@@ -1,4 +1,5 @@
 from state import State
+from random import randint
 
 
 class Tree:
@@ -15,13 +16,21 @@ class Ai:
 
 
     def vcf_cycle(self, current):
+        if len(current.state.defend_list()) > 0:
+            return False
+
         for i in range(15):
             for j in range(15):
                 if current.state.black[i][j] == 0 and current.state.white[i][j] == 0:
-                    if current.state.check_finish(i, j):
+                    if current.state.check_finish(i, j) or current.state.check_5(i, j):
                         current.child_node.append(Tree(current.state.next(15 * i + j), 15*i + j))
                         current.child_node[-1].v = True
                         return True
+                    elif not current.state.check_turn() and current.state.check_6(i,j):
+                        current.child_node.append(Tree(current.state.next(15 * i + j), 15 * i + j))
+                        current.child_node[-1].v = True
+                        return True
+
                     if current.state.count_4(i, j) > 0 and current.state.check_legal(i, j)[0]:
                         current.child_node.append(Tree(current.state.next(15 * i + j), 15*i + j))
 
@@ -29,6 +38,8 @@ class Ai:
             for c in current.child_node:
                 for k in c.state.defend_list():
                     c.child_node.append(Tree(c.state.next(k), k))
+
+                print(c.previous_action // 15, c.previous_action % 15, len(current.child_node), len(c.child_node))
 
                 if len(c.child_node) > 0:
                     for k in c.child_node:
@@ -54,24 +65,45 @@ class Ai:
 
 
     def vct_cycle(self, current):
+        if len(current.state.defend_list()) > 0:
+            return False
+
+        if len(current.state.defend_list2()) > 0:
+            return False
+
+        """
+        if len(current.state.defend_list2()) > 0:
+            if self.vcf_cycle(current):
+                return True
+            else:
+                return False
+        """
+
         for i in range(15):
             for j in range(15):
                 if current.state.black[i][j] == 0 and current.state.white[i][j] == 0:
-                    if current.state.check_finish(i, j) or current.state.check_finish2(i, j):
+                    if current.state.check_finish(i, j) or current.state.check_finish2(i, j) or current.state.check_5(i, j):
                         current.child_node.append(Tree(current.state.next(15 * i + j), 15*i + j))
                         current.child_node[-1].v = True
                         return True
+                    elif not current.state.check_turn() and current.state.check_6(i, j):
+                        current.child_node.append(Tree(current.state.next(15 * i + j), 15 * i + j))
+                        current.child_node[-1].v = True
+                        return True
+
                     if (current.state.count_3(i, j) > 0 or current.state.count_4(i, j) > 0) and current.state.check_legal(i, j)[0]:
                         current.child_node.append(Tree(current.state.next(15 * i + j), 15 * i + j))
 
         if len(current.child_node) > 0:
             for c in current.child_node:
+                print(c.previous_action//15, c.previous_action%15, len(current.child_node))
                 for k in c.state.defend_list():
                     c.child_node.append(Tree(c.state.next(k), k))
 
                 for k in c.state.defend_list2():
                     c.child_node.append(Tree(c.state.next(k), k))
 
+                #print(c.previous_action // 15, c.previous_action % 15, len(current.child_node), len(c.child_node))
                 if len(c.child_node) > 0:
                     for k in c.child_node:
                         if c.v == True or c.v == None:
@@ -95,12 +127,11 @@ class Ai:
             return False
 
 
-
-    @staticmethod
     def action(self, state):
         win_action = []
         depend_action = []
         attack_action = []
+        near_action = []
 
         if state.check_turn():
             me = state.black
@@ -152,6 +183,7 @@ class Ai:
                 for c in vcf_root.child_node:
                     if c.v == True:
                         attack_action.append(c.previous_action)
+                        print(c.previous_action, "vcf 탐색완료")
 
         # 상대 3 찾기
         if not win_action and not depend_action and not attack_action:
@@ -177,6 +209,24 @@ class Ai:
                 for c in vct_root.child_node:
                     if c.v == True:
                         attack_action.append(c.previous_action)
+                        print(c.previous_action, "vct 탐색완료")
+
+        if win_action:
+            return  win_action[randint(0,len(win_action)-1)]
+        if depend_action:
+            return  depend_action[randint(0,len(depend_action)-1)]
+        if attack_action:
+            return  attack_action[randint(0,len(attack_action)-1)]
+
+        for i in range(15):
+            for j in range(15):
+                if not win_action and not depend_action and not attack_action:
+                    if state.check_near(i,j) and me[i][j] == 0 and enemy[i][j] == 0 and state.check_legal(i,j)[0]:
+                        near_action.append(15*i+j)
+
+        if not near_action:
+            near_action.append(112)
+        return  near_action[randint(0,len(near_action)-1)]
 
 
     def find_opened_3(self, state, color):

@@ -35,8 +35,8 @@ model.save('model1.h5')
 # 모델 load
 model = load_model('model1.h5')
 
-# f = open("renjunet_v10_20200529.txt", 'r', encoding='utf-16')
-f = codecs.open("renjunet_v10_20200529.txt", encoding='mac_roman')
+# f = open("data.txt", 'r', encoding='utf-16')
+f = codecs.open("data.txt", encoding='mac_roman')
 
 
 def symmetry(i, r, c):

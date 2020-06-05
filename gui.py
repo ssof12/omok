@@ -9,6 +9,8 @@ from tensorflow.keras import backend as K
 import numpy as np
 from test import model_action
 from ai import Ai
+from test_model import predict
+from feature import get_features
 
 
 ctypes.windll.user32.SetProcessDPIAware()
@@ -42,14 +44,21 @@ class Gui:
 
 
     def run(self):
-        model = load_model('./model/latest.h5')
+        #model = load_model('./model/latest.h5')
         #model2 = load_model('./model/best.h5')
+        model = load_model('./model/aa.h5')
+        model2 = load_model('train2.h5')
+
         ai = Ai()
         i = 0
         win1 = 0
         win2 = 0
         draw = 0
         done = False
+
+        flag = True
+        bm, wm = 1,2
+        num = 0
         while not done:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -68,11 +77,22 @@ class Gui:
                     x,y = event.pos
                     row = round((y - 43) / 51)
                     col = round((x - 43) / 51)
-                    #self.game.next(row * game.width + col)
-                    self.game.next(ai.action(self.game.state))
 
-                    self.game.game_length += 1
+                    if self.game.state.check_turn():
+                        pass
+                        #self.game.next(predict(model, self.game.state))
+                        self.game.next(row * game.width + col)
+                        get_features(self.game.state)
+
+
+                    else:
+                        pass
+                        #self.game.next(predict(model, self.game.state))
+                        self.game.next(row * game.width + col)
+                        get_features(self.game.state)
+
                     self.update_game_view()
+
             '''
             if self.game.state.check_turn():
                 #action = model_action(model, self.game.state)

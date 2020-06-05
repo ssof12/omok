@@ -62,7 +62,7 @@ class State:
             end = 2
             return legal, illegal, end
 
-        if not self.turn:
+        if not self.check_turn():
             return empty, illegal, end
 
         for k in empty:
@@ -246,7 +246,7 @@ class State:
         l1, l2, r1, r2 = 0, 0, 0, 0
 
         try:
-            for k in range(1, 5):
+            for k in range(1, 6):
                 if i + a * k < 0 or j + b * k < 0:
                     break
                 if me[i + a * k][j + b * k] == 1:
@@ -263,7 +263,7 @@ class State:
             pass
 
         try:
-            for k in range(1, 5):
+            for k in range(1, 6):
                 if i - a * k < 0 or j - b * k < 0:
                     break
                 if me[i - a * k][j - b * k] == 1:
@@ -521,6 +521,115 @@ class State:
         me[i][j] = 0
         return False
 
+    def get_10set(self, i, j, c):
+        if self.check_turn():
+            me = self.black
+        else:
+            me = self.white
+
+        if c == 0:
+            a, b = 0, 1
+        elif c == 1:
+            a, b = 1, 0
+        elif c == 2:
+            a, b = 1, 1
+        else:
+            a, b = -1, 1
+
+        left, lm, rm, right = 0, 0, 0, 0
+        l1, l2, r1, r2 = 0, 0, 0, 0
+
+        try:
+            for k in range(1, 6):
+                if i + a * k < 0 or j + b * k < 0:
+                    break
+                if me[i + a * k][j + b * k] == 1:
+                    if r1 == 0:
+                        rm += 1
+                    else:
+                        right += 1
+                elif r1 == 0:
+                    r1 = k
+                else:
+                    r2 = k
+                    break
+        except IndexError:
+            pass
+
+        try:
+            for k in range(1, 6):
+                if i - a * k < 0 or j - b * k < 0:
+                    break
+                if me[i - a * k][j - b * k] == 1:
+                    if l1 == 0:
+                        lm += 1
+                    else:
+                        left += 1
+                elif l1 == 0:
+                    l1 = k
+                else:
+                    l2 = k
+                    break
+        except IndexError:
+            pass
+
+        return a, b, left, lm, rm, right, l1, l2, r1, r2
+
+
+    def get_e10set(self, i, j, c):
+        if self.check_turn():
+            enemy = self.white
+        else:
+            enemy = self.black
+
+        if c == 0:
+            a, b = 0, 1
+        elif c == 1:
+            a, b = 1, 0
+        elif c == 2:
+            a, b = 1, 1
+        else:
+            a, b = -1, 1
+
+        left, lm, rm, right = 0, 0, 0, 0
+        l1, l2, r1, r2 = 0, 0, 0, 0
+
+        try:
+            for k in range(1, 6):
+                if i + a * k < 0 or j + b * k < 0:
+                    break
+                if enemy[i + a * k][j + b * k] == 1:
+                    if r1 == 0:
+                        rm += 1
+                    else:
+                        right += 1
+                elif r1 == 0:
+                    r1 = k
+                else:
+                    r2 = k
+                    break
+        except IndexError:
+            pass
+
+        try:
+            for k in range(1, 6):
+                if i - a * k < 0 or j - b * k < 0:
+                    break
+                if enemy[i - a * k][j - b * k] == 1:
+                    if l1 == 0:
+                        lm += 1
+                    else:
+                        left += 1
+                elif l1 == 0:
+                    l1 = k
+                else:
+                    l2 = k
+                    break
+        except IndexError:
+            pass
+
+        return a, b, left, lm, rm, right, l1, l2, r1, r2
+
 
     def count_4(self, i, j):
         if self.check_turn():
@@ -690,33 +799,23 @@ class State:
         for c in range(4):
             a, b, left, mid, right, l1, l2, r1, r2 = self.get_9set(i, j, c)
 
+            l_half, r_half = False, False
             if mid == 4:
-                half = 0
                 if left >= 1:
-                    half += 1
-                    if right >= 1:
-                        half += 1
-                    elif r1 == 0:
-                        half += 1
-                    elif self.white[i + a * r1][j + b * r1] == 1:
-                        half += 1
-                elif right >= 1:
-                    half += 1
-                    if l1 == 0:
-                        half += 1
-                    elif self.white[i - a * l1][j - b * l1] == 1:
-                        half += 1
-                if l1 == 0:
-                    half += 1
+                    l_half = True
+                elif l1 == 0:
+                    l_half = True
                 elif self.white[i - a * l1][j - b * l1] == 1:
-                    half += 1
+                    l_half = True
 
-                if r1 == 0:
-                    half += 1
+                if right >= 1:
+                    r_half = True
+                elif r1 == 0:
+                    r_half = True
                 elif self.white[i + a * r1][j + b * r1] == 1:
-                    half += 1
+                    r_half = True
 
-                if half < 2:
+                if not(l_half == True and r_half == True):
                     count += 1
 
             else:
@@ -727,7 +826,7 @@ class State:
                     if self.white[i + a * r1][j + b * r1] == 0:
                         count += 1
 
-        self.black[i][j] = 0
+        me[i][j] = 0
         if count >= 2:
             return True
         return False

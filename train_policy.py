@@ -32,7 +32,7 @@ model.save('policy_white.h5')
 #K.clear_session()
 #del model
 
-f = codecs.open("/content/drive/My Drive/머신러닝/오목/renjunet_v10_20200529.txt", encoding='mac_roman')
+f = codecs.open("데이터", encoding='mac_roman')
 
 def symmetry(i, r, c):
     if i == 0:

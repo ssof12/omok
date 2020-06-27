@@ -60,3 +60,7 @@
 - 오목판의 상태에서 여러 feature들을 추출하는 함수를 담고있다.
 - 눈에 띄는 성능향상을 보이지 않아 신경망의 input에 추가적인 feature들을 사용하지는 않았지만 추후 feature들을 변경하여 테스트해볼 수 있을 것이다.
 
+
+### Requirements
+- pygame, tensorflow (신경망 학습의 경우 케라스 일부가 필요할 수도 있음)
+- renju.net의 오목 데이터

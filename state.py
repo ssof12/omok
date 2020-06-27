@@ -1,6 +1,6 @@
 from copy import deepcopy
 from random import randint
-from time import time
+
 
 class State:
     def __init__(self, black = [], white = [], turn = True):
@@ -19,9 +19,9 @@ class State:
             self.white = deepcopy(white)
 
         if turn:
-            self.turn = [[1] * 15] * 15
+            self.turn = [[1]]
         else:
-            self.turn = [[0] * 15] * 15
+            self.turn = [[0]]
 
 
     def next(self, action):
@@ -521,6 +521,7 @@ class State:
         me[i][j] = 0
         return False
 
+
     def get_10set(self, i, j, c):
         if self.check_turn():
             me = self.black
@@ -989,7 +990,7 @@ class State:
             l1, l2, r1, r2 = 0, 0, 0, 0
 
             try:
-                for k in range(1, 5):
+                for k in range(1, 6):
                     if i + a * k < 0 or j + b * k < 0:
                         break
                     if enemy[i + a * k][j + b * k] == 1:
@@ -1006,7 +1007,7 @@ class State:
                 pass
 
             try:
-                for k in range(1, 5):
+                for k in range(1, 6):
                     if i - a * k < 0 or j - b * k < 0:
                         break
                     if enemy[i - a * k][j - b * k] == 1:
@@ -1391,141 +1392,3 @@ class State:
                         continue
 
         return attack
-
-
-    def check_normal(self, i, j):
-        for a in range(-2, 3):
-            for b in range(-2, 3):
-                if a == 0 == b:
-                    continue
-                try:
-                    if i+a < 0 or j+b < 0:
-                        continue
-                    if self.black[i+a][j+b] == 1 or self.white[i+a][j+b] == 1:
-                        return True
-                except IndexError:
-                    pass
-        return False
-
-
-    def check_near(self, i, j):
-        for a in range(-1, 2):
-            for b in range(-1, 2):
-                if a == 0 == b:
-                    continue
-                try:
-                    if i+a < 0 or j+b < 0:
-                        continue
-                    if self.black[i+a][j+b] == 1 or self.white[i+a][j+b] == 1:
-                        return True
-                except IndexError:
-                    pass
-        return False
-
-
-    def bot_action(self):
-        win_action = []
-        defend_action = []
-        attack_action = []
-        normal_action = []
-
-        if self.check_turn():
-            me = self.black
-            enemy = self.white
-        else:
-            me = self.white
-            enemy = self.black
-
-        for i in range(15):
-            for j in range(15):
-
-                if self.black[i][j] == 0 and self.white[i][j] == 0 and self.check_5(i,j):
-                    win_action.append(15*i+j)
-
-                if not self.check_turn():
-                    if self.black[i][j] == 0 and self.white[i][j] == 0 and self.check_6(i,j):
-                        win_action.append(15*i+j)
-
-                if not win_action and enemy[i][j] == 1:
-                    for k in self.check_defend(i,j):
-                        if k not in defend_action and self.check_legal(k//15,k%15)[0]:
-                            defend_action.append(k)
-
-                if not win_action and not defend_action and me[i][j] == 1:
-                    for k in self.check_attack(i,j):
-                        if k not in attack_action and self.check_legal(k//15,k%15)[0]:
-                            attack_action.append(k)
-
-                if not win_action and not defend_action and not attack_action:
-                    if self.check_normal(i,j) and self.black[i][j] == 0 and self.white[i][j] == 0 and self.check_legal(i,j)[0]:
-                        normal_action.append(15*i+j)
-
-        #print(win_action, 'win')
-        #print(depend_action, 'depend')
-        #print(attack_action, 'attack')
-        #print(normal_action, 'normal')
-
-        if win_action:
-            return  win_action[randint(0,len(win_action)-1)]
-        if defend_action:
-            return  defend_action[randint(0,len(defend_action)-1)]
-        if attack_action:
-            return  attack_action[randint(0,len(attack_action)-1)]
-
-        if not normal_action:
-            normal_action.append(112)
-        return  normal_action[randint(0,len(normal_action)-1)]
-
-
-    def bot2_action(self):
-        win_action = []
-        depend_action = []
-        attack_action = []
-        near_action = []
-
-        if self.check_turn():
-            me = self.black
-            enemy = self.white
-        else:
-            me = self.white
-            enemy = self.black
-
-        for i in range(15):
-            for j in range(15):
-
-                if self.black[i][j] == 0 and self.white[i][j] == 0 and self.check_5(i,j):
-                    win_action.append(15*i+j)
-
-                if not self.check_turn():
-                    if self.black[i][j] == 0 and self.white[i][j] == 0 and self.check_6(i,j):
-                        win_action.append(15*i+j)
-
-                if not win_action and enemy[i][j] == 1:
-                    for k in self.check_defend(i,j):
-                        if k not in depend_action and self.check_legal(k//15,k%15)[0]:
-                            depend_action.append(k)
-
-                if not win_action and not depend_action and me[i][j] == 1:
-                    for k in self.check_attack(i,j):
-                        if k not in attack_action and self.check_legal(k//15,k%15)[0]:
-                            attack_action.append(k)
-
-                if not win_action and not depend_action and not attack_action:
-                    if self.check_near(i,j) and self.black[i][j] == 0 and self.white[i][j] == 0 and self.check_legal(i,j)[0]:
-                        near_action.append(15*i+j)
-
-        #print(win_action, 'win')
-        #print(depend_action, 'depend')
-        #print(attack_action, 'attack')
-        #print(near_action, 'normal')
-
-        if win_action:
-            return  win_action[randint(0,len(win_action)-1)]
-        if depend_action:
-            return  depend_action[randint(0,len(depend_action)-1)]
-        if attack_action:
-            return  attack_action[randint(0,len(attack_action)-1)]
-
-        if not near_action:
-            near_action.append(112)
-        return  near_action[randint(0,len(near_action)-1)]

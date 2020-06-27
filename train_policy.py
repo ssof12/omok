@@ -1,27 +1,23 @@
-# 일괄 학습
-
-
 import numpy as np
 import codecs
 from copy import deepcopy
-from tensorflow.keras.layers import Activation, Dense, Dropout, Conv2D, Flatten, MaxPool2D
+from tensorflow.keras.layers import Activation, Dense, Conv2D, Flatten
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import to_categorical
 from random import randint
 
 from state import State
-from feature import get_features
+import keras.backend as K
 
-TRAIN_SIZE = 10000
+TRAIN_SIZE = 500000
 TRAIN_COUNT = 1
 TEST_SIZE = 2000
 
-
-# 모델 생성
+# b, w policy 모델 생성
 model = Sequential()
 
-model.add(Conv2D(96, (3, 3), activation='relu', padding='same', input_shape=(15, 15, 9)))
+model.add(Conv2D(96, (3, 3), activation='relu', padding='same', input_shape=(15, 15, 2)))
 for i in range(5):
     model.add(Conv2D(96, (3, 3), activation='relu', padding='same'))
 model.add(Conv2D(1, (1, 1), activation='relu', padding='same'))
@@ -29,15 +25,14 @@ model.add(Conv2D(1, (1, 1), activation='relu', padding='same'))
 model.add(Flatten())
 model.add(Dense(225, activation='softmax'))
 
-model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.001), metrics=['acc'])
-model.save('model1.h5')
+model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.0025), metrics=['acc'])
+model.save('policy_black.h5')
+model.save('policy_white.h5')
 
-# 모델 load
-model = load_model('model1.h5')
+#K.clear_session()
+#del model
 
-# f = open("data.txt", 'r', encoding='utf-16')
-f = codecs.open("data.txt", encoding='mac_roman')
-
+f = codecs.open("/content/drive/My Drive/머신러닝/오목/renjunet_v10_20200529.txt", encoding='mac_roman')
 
 def symmetry(i, r, c):
     if i == 0:
@@ -59,9 +54,12 @@ def symmetry(i, r, c):
 
 
 for data_num in range(TRAIN_COUNT):
-    count = 0
-    state = np.zeros(shape=(TRAIN_SIZE,9,15,15))
-    move = np.zeros(shape=TRAIN_SIZE)
+    b_count = 0
+    w_count = 0
+    b_state = np.zeros(shape=(TRAIN_SIZE, 2, 15, 15))
+    w_state = np.zeros(shape=(TRAIN_SIZE, 2, 15, 15))
+    b_move = np.zeros(shape=TRAIN_SIZE)
+    w_move = np.zeros(shape=TRAIN_SIZE)
 
     while True:
         line = f.readline()
@@ -71,17 +69,10 @@ for data_num in range(TRAIN_COUNT):
             continue
 
         i = 6
-        black = []
-        white = []
-        turn = []
-
-        for n in range(15):
-            black.append([0] * 15)
-            white.append([0] * 15)
-            turn.append([1] * 15)
 
         sym = randint(0, 7)
         s = State()
+        m_count = 0
 
         while 96 < ord(line[i]) < 112:
             r = ord(line[i]) - 97
@@ -93,109 +84,55 @@ for data_num in range(TRAIN_COUNT):
                 i += 3
 
             r, c = symmetry(sym, r, c)
-            legal_features, my_feature_4, my_feature_3, my_feature_2, enemy_feature_4, enemy_feature_3 = get_features(s)
-            state[count] = [deepcopy(black), deepcopy(white), deepcopy(turn), legal_features, my_feature_4, my_feature_3, my_feature_2, enemy_feature_4, enemy_feature_3]
-            move[count] = 15 * r + c
-            count += 1
-            s = s.next(15 * r + c)
+            m_count += 1
 
-            if turn[0][0] == 1:
-                black[r][c] = 1
-                turn = [[0] * 15] * 15
-            else:
-                white[r][c] = 1
-                turn = [[1] * 15] * 15
+            if s.check_turn() and b_count < TRAIN_SIZE:
+                b_state[b_count] = [deepcopy(s.black), deepcopy(s.white)]
+                b_move[b_count] = 15 * r + c
+                b_count += 1
+            elif not s.check_turn() and w_count < TRAIN_SIZE:
+                w_state[w_count] = [deepcopy(s.white), deepcopy(s.black)]
+                w_move[w_count] = 15 * r + c
+                w_count += 1
 
-            if count == TRAIN_SIZE:
+            if b_count % 10000 == 0 and b_count < TRAIN_SIZE:
+                print(b_count)
+            if b_count == TRAIN_SIZE and w_count == TRAIN_SIZE:
+                print(b_count)
                 break
 
-        if count == TRAIN_SIZE:
+            s = s.next(15 * r + c)
+
+        if b_count == TRAIN_SIZE and w_count == TRAIN_SIZE:
             break
 
-    state = state.transpose(0, 2, 3, 1)
-    move = to_categorical(move, 225)
+    b_state = b_state.transpose(0, 2, 3, 1)
+    w_state = w_state.transpose(0, 2, 3, 1)
+    b_move = to_categorical(b_move, 225)
+    w_move = to_categorical(w_move, 225)
 
     print("데이터", data_num + 1)
-    print(state.shape)
-    print(move.shape)
+    print(b_state.shape, w_state.shape)
+    print(b_move.shape, w_move.shape)
     print()
 
-    # 모델 학습
-    history = model.fit(state, move, batch_size=5120, epochs=20, validation_split=0.1)
-    print()
-    print()
+    # 모델 학습, 저장
+    model = load_model('policy_black.h5')
+    history = model.fit(b_state, b_move, batch_size=5120, epochs=10, shuffle=True, validation_split=0.1)
+    model.save('policy_black.h5')
+
+    #K.clear_session()
+    #del model
+
+    model2 = load_model('policy_white.h5')
+    history2 = model.fit(w_state, w_move, batch_size=5120, epochs=10, shuffle=True, validation_split=0.1)
+    model2.save('policy_white.h5')
+
+    #K.clear_session()
+    #del model
 
     # 메모리 해제
     state = np.array([0])
     move = np.array([0])
 
-    # 모델 저장
-    model.save('train' + str(data_num + 1) + '.h5')
-
-
-state = np.zeros(shape=(TEST_SIZE,3,15,15))
-move = np.zeros(shape=TEST_SIZE)
-count = 0
-while True:
-    line = f.readline()
-    if not line:
-        break
-    if line[:6] != "<move>":
-        continue
-
-    i = 6
-    black = []
-    white = []
-    turn = []
-
-    for n in range(15):
-        black.append([0] * 15)
-        white.append([0] * 15)
-        turn.append([1] * 15)
-
-    sym = randint(0, 7)
-
-    while 96 < ord(line[i]) < 112:
-        r = ord(line[i]) - 97
-        if 47 < ord(line[i + 2]) < 58:
-            c = int(line[i + 1:i + 3]) - 1
-            i += 4
-        else:
-            c = int(line[i + 1]) - 1
-            i += 3
-
-        r, c = symmetry(sym, r, c)
-        state[count] = [deepcopy(black), deepcopy(white), deepcopy(turn)]
-        move[count] = 15 * r + c
-        count += 1
-
-        if turn[0][0] == 1:
-            black[r][c] = 1
-            turn = [[0] * 15] * 15
-        else:
-            white[r][c] = 1
-            turn = [[1] * 15] * 15
-
-        if count == TEST_SIZE:
-            break
-
-    if count == TEST_SIZE:
-        break
-
 f.close()
-
-
-state = state.transpose(0, 2, 3, 1)
-move = to_categorical(move, 225)
-
-print("테스트 데이터")
-print(state.shape)
-print(move.shape)
-print()
-
-# 평가
-test_loss, test_acc = model.evaluate(state, move)
-
-# 메모리 해제
-state = np.array([0])
-move = np.array([0])

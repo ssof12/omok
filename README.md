@@ -1,4 +1,4 @@
-# omok AI
+# 오목 AI
 
 
 ## overview

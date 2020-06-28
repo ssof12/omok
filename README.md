@@ -1,5 +1,6 @@
 # 오목 AI
 
+![오목](https://user-images.githubusercontent.com/65106267/85946756-99c58580-b981-11ea-9c92-986b8c4c6952.jpg)
 
 ## overview
 

@@ -57,7 +57,7 @@
 
 - pygame으로 구현된 오목게임이다.
 - 모든 이미지 및 내용물은 자체 제작되었다.
-- mcts_action()함수가 호출되는 위치를 찾아 predict.py 파일의 predict_p() 함수로 바꾸면 컴퓨터가 트리탐색 대신 예측 네트워크만 이용해서 두게 설정할 수 있다. (line 165, 229)
+- mcts_action() 함수를  predict.py 파일의 predict_p() 함수로 바꾸면 컴퓨터가 트리탐색 대신 예측 네트워크만 이용해서 두게 설정할 수 있다. (line 165, 229)
 
 
 ### train_policy.py

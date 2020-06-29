@@ -94,5 +94,5 @@
 
 
 ### Requirements
-- pygame, tensorflow (신경망 학습의 경우 케라스 일부가 필요할 수도 있음)
+- pygame, numpy, tensorflow (신경망 학습의 경우 케라스 일부가 필요할 수도 있음)
 - renju.net의 오목 데이터
